@@ -1,9 +1,18 @@
 #/bin/bash/env bash
 set -x
+QEMU_BIN="${QEMU_BIN:-/mnt/qemu/build/qemu-system-aarch64}"
+if [ ! -x "$QEMU_BIN" ]; then
+  QEMU_BIN="$(command -v qemu-system-aarch64 || true)"
+fi
+if [ -z "$QEMU_BIN" ]; then
+  echo "ERROR: qemu-system-aarch64 not found (set QEMU_BIN)"
+  exit 1
+fi
+
 echo "rnet (Realm A) -> shm1 <- ra (Realm B)"
 
 echo "--------------------rnet (Realm A)------------------------"
-qemu-system-aarch64\
+"$QEMU_BIN"\
       -M confidential-guest-support=rme0 \
       -object rme-guest,id=rme0,measurement-log=on,measurement-algorithm=sha512  \
       -nodefaults \
@@ -23,7 +32,7 @@ qemu-system-aarch64\
       -append "console=hvc0 root=/dev/vda1 rw blabla" < /dev/hvc1 >/dev/hvc1 &
 
 echo "--------------------ra (Realm B)------------------------"
-qemu-system-aarch64\
+"$QEMU_BIN"\
       -M confidential-guest-support=rme0 \
       -object rme-guest,id=rme0,measurement-log=on,measurement-algorithm=sha512  \
       -nodefaults \
